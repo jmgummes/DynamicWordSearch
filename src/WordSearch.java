@@ -107,13 +107,10 @@ public class WordSearch {
             turn.addMatches(i, matches);
           }
         } while(wordIndicesIterator.hasNext());
-        if(turn.isValid())
-          transform(turn);
-        else {
-        }
         turns.add(turn);
-        if(!isValid())
+        if(turn.getMatchesCount() != 1)
           break;
+        transform(turn);
       }
     }
 
@@ -128,21 +125,17 @@ public class WordSearch {
       return turns;
     }
     
-    public boolean isValid() {
-      return turns.get(turns.size() - 1).isValid();
-    }
-    
     private void transform(Turn turn) {
-      turn.modifiedSearchGrid = Arrays.copyOf(getLatestSearchGrid(), getLatestSearchGrid().length);
+      turn.modifiedSearchGrid = Arrays.copyOf(getLatestSearchGrid(1), getLatestSearchGrid(1).length);
       int wordIndex = turn.map.entrySet().iterator().next().getKey();
       for(int i = 0; i < turn.modifiedSearchGrid.length; i++)
         if(turn.modifiedSearchGrid[i] == wordBank[wordIndex].charAt(0))
           turn.modifiedSearchGrid[i] = wordBank[wordIndex].charAt(wordBank[wordIndex].length() - 1); 
     }
     
-    private char[] getLatestSearchGrid() {
-      if(turns.isEmpty()) return searchGrid;
-      return turns.get(turns.size() - 1).getModifiedSearchGrid();
+    private char[] getLatestSearchGrid(int i) {
+      if(turns.size() - 1 - i < 0) return searchGrid;
+      return turns.get(turns.size() - 1 - i).getModifiedSearchGrid();
     }
     
     private boolean lookForMatch(int i, int row, int col, MatchDirection direction) {    
@@ -154,7 +147,7 @@ public class WordSearch {
     }
     
     private char getSearchGridChar(int row, int col) {
-      char[] currentGrid = getLatestSearchGrid();
+      char[] currentGrid = getLatestSearchGrid(0);
       char c = currentGrid[(cols * row) + col];
       return c;
     }
@@ -186,16 +179,15 @@ public class WordSearch {
       return map;
     }
     
-    public char[] getModifiedSearchGrid() {
-      return modifiedSearchGrid;
+    public int getMatchesCount() {
+      int count = 0;
+      for(Set<Match> s : map.values())
+        count += s.size();
+      return count;
     }
     
-    private boolean isValid() {
-      if(map.size() != 1)
-        return false; 
-      if(map.entrySet().iterator().next().getValue().size() > 1)
-        return false;
-      return true;
+    public char[] getModifiedSearchGrid() {
+      return modifiedSearchGrid;
     }
     
     private void addMatches(int i, Set<Match> matches) {

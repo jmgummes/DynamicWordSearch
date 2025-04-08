@@ -14,35 +14,33 @@ public class Generator {
   private int rows;
   private int cols;
   private int wordBankCount;
-  private Invalidator invalidator;
+  private int missingInSolutionCount;
+  private int extraMatchesCount;
   
-  public Generator(String[] sourceWords, int rows, int cols, int wordBankCount, Invalidator invalidator) {
+  public Generator(String[] sourceWords, int rows, int cols, int wordBankCount, int missingInSolutionCount, int extraMatchesCount) {
     this.sourceWords = sourceWords;
     this.rows = rows;
     this.cols = cols;
     this.wordBankCount = wordBankCount;
-    this.invalidator = invalidator;
+    this.missingInSolutionCount = missingInSolutionCount;
+    this.extraMatchesCount = extraMatchesCount;
   }
   
   public WordSearch generate() {
-    String[] solutionWord = new String[wordBankCount];
-    String[] solutionWordScrambled = new String[wordBankCount];
-    int[] solutionWordPosition = new int[wordBankCount];
-    MatchDirection[] solutionDirection = new MatchDirection[wordBankCount];
+    String[] solutionWord = new String[fetchCount()];
+    String[] solutionWordScrambled = new String[fetchCount()];
+    int[] solutionWordPosition = new int[fetchCount()];
+    MatchDirection[] solutionDirection = new MatchDirection[fetchCount()];
     
-    for(int i = 0; i < nTurns(); i++) {
-      int nWordsToSet;
-      if(invalidator != null && (i == nTurns() - 1))
-        nWordsToSet = invalidator.nMatches;
-      else
-        nWordsToSet = 1;
-      for(int j = 0; j < nWordsToSet; j++) {
-        if(!setWord(solutionWord, solutionWordScrambled, i + j))
-          return null;
-        scramblePreviousWords(solutionWordScrambled, i + j);
-        placeWord(solutionWordPosition, solutionDirection, solutionWordScrambled, i + j);
-      }
-    }
+    for(int i = 0; i < fetchCount(); i++)
+      if(!setWord(solutionWord, solutionWordScrambled, i))
+        return null;
+    
+    for(int i = 0; i < fetchCount() - extraMatchesCount - 1; i++)
+      scramblePreviousWords(solutionWordScrambled, i + extraMatchesCount + 1);
+    
+    for(int i = 0; i < fetchCount(); i++)
+      placeWord(solutionWordPosition, solutionDirection, solutionWordScrambled, i);
     
     String[] wordBank = generateWordBank(solutionWord);
     
@@ -52,23 +50,29 @@ public class Generator {
           solutionWordPosition, solutionDirection);
       wordSearch = new WordSearch(wordBank, rows, cols, searchGrid);
     }
-    while(!wordSearch.solve().isValid());
+    while(!checkWordSearch(wordSearch));
     return wordSearch;
+  }
+  
+  private int fetchCount() {
+    return wordBankCount - missingInSolutionCount; 
   }
   
   private boolean checkWordSearch(WordSearch wordSearch) {
     WordSearch.Solution solution = wordSearch.solve();
-    if(invalidator == null)
-      return solution.isValid();
-    if(solution.getTurns().size() != invalidator.nTurns)
+    
+    int expectedTurnsCount = fetchCount() - extraMatchesCount;
+    if(missingInSolutionCount > 0 && extraMatchesCount == 0)
+      expectedTurnsCount++;
+    if(solution.getTurns().size() != expectedTurnsCount)
       return false;
-    return solution.getTurns().get(solution.getTurns().size() - 1).getMap().size() == invalidator.nMatches;
-  }
-  
-  private int nTurns() {
-    if(invalidator != null)
-      return invalidator.nTurns;
-    return wordBankCount;
+      
+    int matchesCount = solution.getTurns().get(solution.getTurns().size() - 1).getMatchesCount();
+    if(missingInSolutionCount == 0 && extraMatchesCount == 0)
+      return matchesCount == 1;
+    if(extraMatchesCount > 0)
+      return matchesCount == (extraMatchesCount + 1);
+    return matchesCount == 0;
   }
   
   private String[] generateWordBank(String[] solutionWord) {
@@ -254,15 +258,5 @@ public class Generator {
       }
     }
     return map;
-  }
-  
-  public static class Invalidator {
-    private int nTurns;
-    private int nMatches;
-      
-    public Invalidator(int nTurns, int nMatches) {
-      this.nTurns = nTurns;
-      this.nMatches = nMatches;
-    }    
   }
 }
