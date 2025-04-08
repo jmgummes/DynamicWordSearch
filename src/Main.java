@@ -31,7 +31,7 @@ public class Main {
       pokemonWords[i] = pokemonWords[i].toUpperCase();
 
     // Generate the word search with the first 151 Pokémon names, 30 words, and a 100x100 grid
-    Generator g = new Generator(pokemonWords, 20, 20, 10, 0, 0);
+    Generator g = new Generator(pokemonWords, 20, 20, 12, 0, 0);
     WordSearch wordSearch = g.generate();
     if(wordSearch == null) {
       System.out.println("failed to generate word search :(");

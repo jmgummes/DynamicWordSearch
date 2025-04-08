@@ -32,15 +32,13 @@ public class Generator {
     int[] solutionWordPosition = new int[fetchCount()];
     MatchDirection[] solutionDirection = new MatchDirection[fetchCount()];
     
-    for(int i = 0; i < fetchCount(); i++)
+    for(int i = 0; i < fetchCount(); i++) {
       if(!setWord(solutionWord, solutionWordScrambled, i))
         return null;
-    
-    for(int i = 0; i < fetchCount() - extraMatchesCount - 1; i++)
-      scramblePreviousWords(solutionWordScrambled, i + extraMatchesCount + 1);
-    
-    for(int i = 0; i < fetchCount(); i++)
+      if(i > extraMatchesCount)
+        scramblePreviousWords(solutionWordScrambled, i);
       placeWord(solutionWordPosition, solutionDirection, solutionWordScrambled, i);
+    }
     
     String[] wordBank = generateWordBank(solutionWord);
     
@@ -76,9 +74,22 @@ public class Generator {
   }
   
   private String[] generateWordBank(String[] solutionWord) {
-    String[] wordBank = Arrays.copyOf(solutionWord, solutionWord.length);
+    String[] wordBank = new String[wordBankCount];
+    System.arraycopy(solutionWord, 0, wordBank, missingInSolutionCount, solutionWord.length);
+    setMissingWords(solutionWord, wordBank);
     Arrays.sort(wordBank);
     return wordBank;
+  }
+  
+  private void setMissingWords(String[] solutionWord, String[] wordBank) {
+    List<String> words = new LinkedList<String>();
+    for(String word : sourceWords)
+      words.add(word);
+    for(int i = 0; i < missingInSolutionCount; i++) {
+      int j = (int) (Math.random() * words.size());
+      wordBank[i] = words.get(j);
+      words.remove(j);
+    }
   }
   
   private char[] generateSearchGrid(String[] solutionWord, String[] solutionWordScrambled, int[] solutionWordPosition, MatchDirection[] solutionDirection) {
@@ -218,7 +229,7 @@ public class Generator {
   }
   
   private boolean checkWord(String word, String[] solutionWord, String[] solutionWordScrambled, int wordIndex) {
-    for(int i = 0; i < wordIndex; i++) {
+    for(int i = extraMatchesCount; i < wordIndex; i++) {
       if(!checkWordDoesNotChangePreviousWordBeforeScrambling(word, solutionWordScrambled[i]))
         return false;
       if(!checkPreviousWordIsNotVisibleAfterScrambling(word, solutionWord, solutionWordScrambled, wordIndex, i))
