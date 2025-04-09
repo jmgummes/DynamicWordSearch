@@ -23,16 +23,34 @@ public class WordSearch {
     this.searchGrid = searchGrid;
   }
   
+  public String[] getWordBank() {
+    return wordBank;
+  }
+  
   public String toString() {
+    StringBuilder sb = new StringBuilder();
+    sb.append(privateToString(" "));
+    sb.append("\n\nWord bank count: ");
+    sb.append(wordBank.length);
+    sb.append("\nWord bank:\n");
+    sb.append(String.join("\n", wordBank));
+    return sb.toString();
+  }
+  
+  public String toCSV() {
+    return privateToString(",");
+  }
+  
+  private String privateToString(String separator) {
     List<String> lines = new LinkedList<String>();
     for(int row = 0; row < rows; row++) {
       List<String> strings  = new LinkedList<String>();
       for(int col = 0; col < cols; col++) {
         strings.add(String.valueOf(searchGrid[row*cols + col]));
       }
-      lines.add(String.join(",", strings));
+      lines.add(String.join(separator, strings));
     }
-    return String.join("\n", lines);
+    return String.join("\n", lines);    
   }
   
   public JSONObject toJson() {
