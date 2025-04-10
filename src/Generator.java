@@ -45,7 +45,7 @@ public class Generator {
       System.out.println("not enough solution words to satisfy requested extraMatchesCount");
       return null;
     }
-            
+                
     int[] solutionWordsPositions = new int[solutionWords.size()];
     MatchDirection[] solutionWordsDirections = new MatchDirection[solutionWords.size()];
     for(int i = 0; i < solutionWords.size(); i++)
@@ -188,8 +188,6 @@ public class Generator {
     
     if(solutionWords.size() == 0 && extraMatchesCount > 0) {
       List<String> startingWords = getStartingWordsForSolutionWithExtraMatches();
-      if(startingWords == null)
-        return solutionWords;
       solutionWords.addWords(startingWords);
       if(count != null)
         count -= solutionWords.size();
@@ -263,7 +261,7 @@ public class Generator {
           return list;
       }
     }
-    return null;
+    return sourceWords.subList(0, extraMatchesCount + 1);
   }
   
   private class SolutionWords {
@@ -341,10 +339,18 @@ public class Generator {
       return true;
     }
     
+    private List<String> getUniqueWords() {
+      Set<String> uniqueWords = new HashSet<String>();
+      for(String word : words)
+        uniqueWords.add(word);
+      return new LinkedList<String>(uniqueWords);
+    }
+    
     private String[] generateWordBank() {
-      String[] wordBank = new String[words.size()];
-      for(int i = 0; i < words.size(); i++)
-        wordBank[missingInSolutionCount + i] = words.get(i);
+      List<String> uniqueWords = getUniqueWords();
+      String[] wordBank = new String[uniqueWords.size()];
+      for(int i = 0; i < uniqueWords.size(); i++)
+        wordBank[missingInSolutionCount + i] = uniqueWords.get(i);
       setMissingWords(wordBank);
       Arrays.sort(wordBank);
       return wordBank;

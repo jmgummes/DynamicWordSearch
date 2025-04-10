@@ -23,6 +23,24 @@ public class WordSearch {
     this.searchGrid = searchGrid;
   }
   
+  public WordSearch(String json) {
+    JSONObject jsonObject = new JSONObject(json);
+    
+    JSONArray wordBankArray = jsonObject.getJSONArray("word_bank");
+    wordBank = new String[wordBankArray.length()];
+    for (int i = 0; i < wordBankArray.length(); i++)
+      wordBank[i] = wordBankArray.getString(i);
+    
+    rows = jsonObject.getInt("rows");
+    cols = jsonObject.getInt("cols");
+    
+    searchGrid = new char[rows * cols];
+    String searchGridStr = jsonObject.getString("search_grid");
+    for(int row = 0; row < rows; row++)
+      for(int col = 0; col < cols; col++)
+        searchGrid[(row * cols) + col] = searchGridStr.charAt((row * cols) + col);
+  }
+  
   public String[] getWordBank() {
     return wordBank;
   }
