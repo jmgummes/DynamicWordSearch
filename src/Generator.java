@@ -3,6 +3,7 @@ import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
@@ -147,25 +148,30 @@ public class Generator {
   }
   
   private SolutionWords getSolutionWords() {
-    return getWordsRecursive(new SolutionWords(), fetchCount());
+    return getWordsRecursive(new SolutionWords(), fetchCount(), new LinkedList<String>(sourceWords));
   }
   
-  private SolutionWords getWordsRecursive(SolutionWords solutionWords, Integer count) {
+  private SolutionWords getWordsRecursive(SolutionWords solutionWords, Integer count, List<String> remainingSourceWords) {
     if((count != null && count == 0) || solutionWords.size() >= sourceWordsLeftForSolutionCount())
       return solutionWords;
     
+    List<String> viableSourceWords = new LinkedList<String>();
+    for(String word : remainingSourceWords)
+      if(solutionWords.checkPreviousWordsAreNotVisibleAfterScrambling(word))
+        viableSourceWords.add(word);
+
     Map<String, Integer> scores = new HashMap<String, Integer>();
-    for(String word: sourceWords)
+    for(String word: viableSourceWords)
       scores.put(word, 0);
-    for(int i = 0; i < sourceWords.size() - 1; i++) {
-      for(int j = i + 1; j < sourceWords.size(); j++) {
-        boolean aBlocksB = aBlocksB(sourceWords.get(i), sourceWords.get(j));
-        boolean bBlocksA = aBlocksB(sourceWords.get(j), sourceWords.get(i));
+    for(int i = 0; i < viableSourceWords.size() - 1; i++) {
+      for(int j = i + 1; j < viableSourceWords.size(); j++) {
+        boolean aBlocksB = aBlocksB(viableSourceWords.get(i), viableSourceWords.get(j));
+        boolean bBlocksA = aBlocksB(viableSourceWords.get(j), viableSourceWords.get(i));
         if(aBlocksB == bBlocksA)
           continue;
         
-        int scoreA = scores.get(sourceWords.get(i));
-        int scoreB = scores.get(sourceWords.get(j));
+        int scoreA = scores.get(viableSourceWords.get(i));
+        int scoreB = scores.get(viableSourceWords.get(j));
         if(aBlocksB) {
           scoreA++;
           scoreB--;
@@ -174,12 +180,12 @@ public class Generator {
           scoreA--;
           scoreB++;
         }
-        scores.put(sourceWords.get(i), scoreA);
-        scores.put(sourceWords.get(j), scoreB);
+        scores.put(viableSourceWords.get(i), scoreA);
+        scores.put(viableSourceWords.get(j), scoreB);
       }
     }
     
-    sourceWords.sort(new Comparator<String>() {
+    viableSourceWords.sort(new Comparator<String>() {
       @Override
       public int compare(String a, String b) {
         return Integer.compare(scores.get(a), scores.get(b));
@@ -187,11 +193,11 @@ public class Generator {
     });
     
     if(solutionWords.size() == 0 && extraMatchesCount > 0) {
-      List<String> startingWords = getStartingWordsForSolutionWithExtraMatches();
-      solutionWords.addWords(startingWords);
+      List<String> startingWords = getStartingWordsForSolutionWithExtraMatches(viableSourceWords);
+      solutionWords.addWords(startingWords, remainingSourceWords);
       if(count != null)
         count -= solutionWords.size();
-      return getWordsRecursive(solutionWords, count);
+      return getWordsRecursive(solutionWords, count, remainingSourceWords);
     }
     
     int branchCount;
@@ -203,16 +209,15 @@ public class Generator {
     
     List<SolutionWords> wordLists = new LinkedList<SolutionWords>();
     wordLists.add(solutionWords);
-    for(int i = 0; i < sourceWords.size(); i++) {
-      if(solutionWords.checkWord(sourceWords.get(i))) {
-        SolutionWords recursiveSolutionWords = new SolutionWords(solutionWords);
-        recursiveSolutionWords.addWordAndScramble(sourceWords.get(i));
-        wordLists.add(getWordsRecursive(recursiveSolutionWords, count == null ? null : (count - 1)));
+    for(String word : viableSourceWords) {
+      SolutionWords recursiveSolutionWords = new SolutionWords(solutionWords);
+      List<String> rsw = new LinkedList<String>(remainingSourceWords);
+      recursiveSolutionWords.addWordAndScramble(word, rsw);
+      wordLists.add(getWordsRecursive(recursiveSolutionWords, count == null ? null : (count - 1), rsw));
         
-        branchCount--;
-        if(branchCount == 0)
-          break;
-      }
+      branchCount--;
+      if(branchCount == 0)
+        break;
     }
     
     return Collections.max(wordLists, new Comparator<SolutionWords>() {
@@ -243,12 +248,12 @@ public class Generator {
     return map;
   }
 
-  private List<String> getStartingWordsForSolutionWithExtraMatches() {
+  private List<String> getStartingWordsForSolutionWithExtraMatches(List<String> words) {
     Map<Character, List<String>> map = new HashMap<Character, List<String>>();
-    for(int i = 0; i < sourceWords.size(); i++) {
+    for(int i = 0; i < words.size(); i++) {
       Set<Character> charSet = new HashSet<Character>();
-      for(int j = 0; j < sourceWords.get(i).length(); j++) {
-        charSet.add(sourceWords.get(i).charAt(j));
+      for(int j = 0; j < words.get(i).length(); j++) {
+        charSet.add(words.get(i).charAt(j));
       }
       for(char c : charSet) {
         List<String> list = map.get(c);
@@ -256,50 +261,63 @@ public class Generator {
           list = new LinkedList<String>();
           map.put(c, list);
         }
-        list.add(sourceWords.get(i));
+        list.add(words.get(i));
         if(list.size() > extraMatchesCount)
           return list;
       }
     }
-    return sourceWords.subList(0, extraMatchesCount + 1);
+    return words.subList(0, extraMatchesCount + 1);
   }
   
   private class SolutionWords {
     private List<String> words;
     private List<String> scrambledWords;
+    private Set<Character> closedChars;
     
     private SolutionWords() {
       this.words = new LinkedList<String>();
       this.scrambledWords = new LinkedList<String>();
+      this.closedChars = new HashSet<Character>();
     }
     
     private SolutionWords(SolutionWords sW) {
       this.words = new LinkedList<String>(sW.words);
       this.scrambledWords = new LinkedList<String>(sW.scrambledWords);
+      this.closedChars = new HashSet<Character>(sW.closedChars);
     }
     
     private int size() {
       return words.size();
     }
     
-    private void addWord(String word) {
-      words.add(word);
-      scrambledWords.add(word);      
+    private void addWord(String word, List<String> remainingSourceWords) {
+      addWords(List.of(word), remainingSourceWords);
     }
     
-    private void addWordAndScramble(String word) {
+    private void addWordAndScramble(String word, List<String> remainingSourceWords) {
       scrambleExistingWords(word);
-      addWord(word);
+      addWord(word, remainingSourceWords);
     }
     
-    private void addWords(List<String> words) {
-      for(String word : words)
-        addWord(word);
+    private void addWords(List<String> words, List<String> remainingSourceWords) {
+      for(String word : words) {
+        this.words.add(word);
+        scrambledWords.add(word);
+        for(int i = 0; i < word.length(); i++)
+          closedChars.add(word.charAt(i));
+      }
+      Iterator<String> iterator = remainingSourceWords.iterator();
+      while(iterator.hasNext()) {
+        String word = iterator.next();
+        if(closedChars.contains(word.charAt(0)))
+          iterator.remove();
+      }
     }
     
     private void scrambleExistingWords(String newWord) {
-      for(int i = 0; i < words.size(); i++)
+      for(int i = 0; i < words.size(); i++) {
         scrambledWords.set(i, getScrambledWord(newWord, scrambledWords.get(i)));
+      }
     }
     
     private String getScrambledWord(String newWord, String wordToScramble) {
@@ -313,19 +331,9 @@ public class Generator {
       return sb.toString(); 
     }
     
-    private boolean checkWord(String word) {      
-      for(int i = 0; i < words.size(); i++) {
-        if(!checkWordDoesNotChangePreviousWordBeforeScrambling(word, words.get(i)))
-          return false;
+    private boolean checkPreviousWordsAreNotVisibleAfterScrambling(String word) {
+      for(int i = 0; i < size(); i++)
         if(!checkPreviousWordIsNotVisibleAfterScrambling(word, i))
-          return false;
-      }
-      return true;
-    }
-    
-    private boolean checkWordDoesNotChangePreviousWordBeforeScrambling(String word, String prevWord) {
-      for(int i = 0; i < prevWord.length(); i++)
-        if(prevWord.charAt(i) == word.charAt(0))
           return false;
       return true;
     }
@@ -333,7 +341,7 @@ public class Generator {
     private boolean checkPreviousWordIsNotVisibleAfterScrambling(String word, int prevWordIndex) {
       String scrambledWord = getScrambledWord(word, scrambledWords.get(prevWordIndex));
       for(int i = 0; i < words.size(); i++) {
-        if(scrambledWord.contains(words.get(i))) 
+        if(scrambledWord.contains(words.get(i)))
           return false;
       }
       return true;
