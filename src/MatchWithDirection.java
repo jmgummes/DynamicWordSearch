@@ -1,12 +1,13 @@
 public class MatchWithDirection extends Match {
-  private MatchDirection direction;
+  private WordDirection direction;
   
-  public MatchWithDirection(int gridSearchRow, int gridSearchCol, MatchDirection direction) {
-    super(gridSearchRow, gridSearchCol);
+  protected MatchWithDirection(int searchGridRow, int searchGridCol, WordDirection direction) {
+    super(searchGridRow, searchGridCol);
     this.direction = direction;
   }
   
-  public MatchDirection getMatchDirection() {
+  @Override
+  public WordDirection getDirection() {
     return direction;
   }
 }

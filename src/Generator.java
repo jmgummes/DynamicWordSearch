@@ -48,7 +48,7 @@ public class Generator {
     }
                 
     int[] solutionWordsPositions = new int[solutionWords.size()];
-    MatchDirection[] solutionWordsDirections = new MatchDirection[solutionWords.size()];
+    WordDirection[] solutionWordsDirections = new WordDirection[solutionWords.size()];
     for(int i = 0; i < solutionWords.size(); i++)
       placeWord(solutionWordsPositions, solutionWordsDirections, solutionWords, i);
     
@@ -88,7 +88,7 @@ public class Generator {
     return matchesCount == 0;
   }
   
-  private char[] generateSearchGrid(SolutionWords solutionWords, int[] solutionWordsPositions, MatchDirection[] solutionWordsDirections) {
+  private char[] generateSearchGrid(SolutionWords solutionWords, int[] solutionWordsPositions, WordDirection[] solutionWordsDirections) {
     Map<Integer, Character> searchGridValuesFromWords = new HashMap<Integer, Character>();
     for(int i = 0; i < solutionWords.scrambledWords.size(); i++) {
       for(int j = 0; j < solutionWords.scrambledWords.get(i).length(); j++) {
@@ -107,12 +107,14 @@ public class Generator {
     return searchGrid;
   }
   
-  private void placeWord(int[] solutionWordPosition, MatchDirection[] solutionDirection, SolutionWords solutionWords, int wordIndex) {
-    MatchDirection direction;
+  private void placeWord(int[] solutionWordPosition, WordDirection[] solutionDirection, SolutionWords solutionWords, int wordIndex) {
+    WordDirectionMapper mapper = new WordDirectionMapper();
+    WordDirection direction;
     int row;
     int col;
     do {
-      direction = MatchDirection.values()[(int)(Math.random() * MatchDirection.values().length)];
+      List<WordDirection> directions = mapper.getPossibleWordDirections(solutionWords.scrambledWords.get(wordIndex));
+      direction = directions.get((int)(Math.random() * directions.size()));
       row = getRandomCoordinate(solutionWords.scrambledWords.get(wordIndex), rows, direction.getDy());
       col = getRandomCoordinate(solutionWords.scrambledWords.get(wordIndex), cols, direction.getDx());
     } while(!checkPlacement(solutionWords, solutionWordPosition, solutionDirection,
@@ -121,8 +123,8 @@ public class Generator {
     solutionWordPosition[wordIndex] = (row * cols) + col;
   }
   
-  private boolean checkPlacement(SolutionWords solutionWords, int[] solutionWordPosition, MatchDirection[] solutionDirection, int wordIndex,
-      MatchDirection direction, int row, int col) {
+  private boolean checkPlacement(SolutionWords solutionWords, int[] solutionWordPosition, WordDirection[] solutionDirection, int wordIndex,
+      WordDirection direction, int row, int col) {
     for(int i = 0; i < wordIndex; i++) {
       int otherRow = solutionWordPosition[i] / cols;
       int otherCol = solutionWordPosition[i] % cols;
@@ -232,8 +234,8 @@ public class Generator {
     return a.contains(b.substring(0, 1));
   }
   
-  private Map<Integer, Integer> getIntersections(int row, int col, MatchDirection direction, int length,
-      int otherRow, int otherColumn, MatchDirection otherDirection, int otherLength) {
+  private Map<Integer, Integer> getIntersections(int row, int col, WordDirection direction, int length,
+      int otherRow, int otherColumn, WordDirection otherDirection, int otherLength) {
     Map<Integer, Integer> map = new HashMap<Integer, Integer>();
     for(int i = 0; i < length; i++) {
       for(int j = 0; j < otherLength; j++) {
