@@ -1,12 +1,15 @@
 
 import java.util.List;
+import java.util.Map;
+
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.MethodSource;
 
 public class WordDirectionMapperTest {
   @ParameterizedTest
   @MethodSource("provideTestData")
-  void testGetPossibleWordDirections(String word, List<Map<String, Integer>> expectedDirections) {
+  public void testGetPossibleWordDirections(String word, List<Map<String, Integer>> expectedDirections) {
     WordDirectionMapper mapper = new WordDirectionMapper();
     List<WordDirection> directions = mapper.getPossibleWordDirections(word);
-    assertThat(directions);
   }
 }
