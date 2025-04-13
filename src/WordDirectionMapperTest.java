@@ -1,7 +1,5 @@
-import java.util.List;
-import java.util.Map;
 
-import org.assertj.core.api.recursive.assertion.*;
+import java.util.List;
 
 public class WordDirectionMapperTest {
   @ParameterizedTest
