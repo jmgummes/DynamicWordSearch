@@ -1,8 +1,17 @@
+import java.util.LinkedList;
+import java.util.List;
+
 public class Match {
   private int searchGridRow;
   private int searchGridCol;
   
-  public Match(int searchGridRow, int searchGridCol) {
+  public static Match create(int searchGridRow, int searchGridCol, WordDirection direction) {
+    if(direction.isDefault())
+      return new Match(searchGridRow, searchGridCol);
+    return new MatchWithDirection(searchGridRow, searchGridCol, direction);
+  }
+  
+  protected Match(int searchGridRow, int searchGridCol) {
     this.searchGridRow = searchGridRow;
     this.searchGridCol = searchGridCol;
   }
@@ -15,7 +24,7 @@ public class Match {
     return searchGridCol;
   }
   
-  public MatchDirection getDirection() {
-    return null;
+  public WordDirection getDirection() {
+    return new WordDirection();
   }
 }

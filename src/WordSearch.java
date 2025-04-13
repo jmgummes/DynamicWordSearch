@@ -47,7 +47,7 @@ public class WordSearch {
   
   public String toString() {
     StringBuilder sb = new StringBuilder();
-    sb.append(privateToString(" "));
+    sb.append(toStringCore(" "));
     sb.append("\n\nWord bank count: ");
     sb.append(wordBank.length);
     sb.append("\nWord bank:\n");
@@ -56,10 +56,10 @@ public class WordSearch {
   }
   
   public String toCSV() {
-    return privateToString(",");
+    return toStringCore(",");
   }
   
-  private String privateToString(String separator) {
+  private String toStringCore(String separator) {
     List<String> lines = new LinkedList<String>();
     for(int row = 0; row < rows; row++) {
       List<String> strings  = new LinkedList<String>();
@@ -99,6 +99,7 @@ public class WordSearch {
       List<Integer> remainingWordIndices = new LinkedList<Integer>();
       for(int i = 0; i < wordBank.length; i++)
         remainingWordIndices.add(i);
+      WordDirectionMapper mapper = new WordDirectionMapper();
       while(!remainingWordIndices.isEmpty()) {
         Turn turn = new Turn();
         Iterator<Integer> wordIndicesIterator = remainingWordIndices.iterator();
@@ -107,20 +108,9 @@ public class WordSearch {
           
           Set<Match> matches = new HashSet<Match>();
           
-          MatchDirection[] directions;
-          if(wordBank[i].length() <= 1)
-            directions = new MatchDirection[] { MatchDirection.LEFT };
-          else if(isPalindrome(wordBank[i]))
-            directions = new MatchDirection[] {
-              MatchDirection.LEFT,
-              MatchDirection.UP,
-              MatchDirection.UP_LEFT,
-              MatchDirection.UP_RIGHT
-            };
-          else
-            directions = MatchDirection.values();
+          List<WordDirection> directions = mapper.getPossibleWordDirections(wordBank[i]);
           
-          for(MatchDirection d : directions) {
+          for(WordDirection d : directions) {
             for(int row = searchStartOffset(d.getDy(), wordBank[i].length());
                 row < searchEndOffset(d.getDy(), rows, wordBank[i].length());
                 row++) {
@@ -128,12 +118,7 @@ public class WordSearch {
                   col < searchEndOffset(d.getDx(), cols, wordBank[i].length());
                   col++) {
                 if(lookForMatch(i, row, col, d)) {
-                  Match m;
-                  if(wordBank[i].length() <= 1)
-                    m = new Match(row, col);
-                  else
-                    m = new MatchWithDirection(row, col, d);
-                  matches.add(m);
+                  matches.add(Match.create(row, col, d));
                 }
               }
             }
@@ -148,13 +133,6 @@ public class WordSearch {
           break;
         transform(turn);
       }
-    }
-
-    private boolean isPalindrome(String string) {
-      for(int i = 0; i < string.length() / 2; i++)
-        if(string.charAt(i) != string.charAt(string.length() - i - 1))
-          return false;
-      return true;
     }
 
     public List<Turn> getTurns() {
@@ -174,7 +152,7 @@ public class WordSearch {
       return turns.get(turns.size() - 1 - i).getModifiedSearchGrid();
     }
     
-    private boolean lookForMatch(int i, int row, int col, MatchDirection direction) {    
+    private boolean lookForMatch(int i, int row, int col, WordDirection direction) {    
       for(int j = 0; j < wordBank[i].length(); j++) {
         if(getSearchGridChar(row + j * direction.getDy(), col + j * direction.getDx()) != wordBank[i].charAt(j))
           return false;
