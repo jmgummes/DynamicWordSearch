@@ -1,5 +1,3 @@
-import java.util.List;
-
 public class WordDirection {
   protected static enum Axis {
     ORDINATE {
