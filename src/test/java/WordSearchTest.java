@@ -50,6 +50,15 @@ public class WordSearchTest {
         assertThat(turns).hasSize(3);
         
         WordSearch.Turn firstTurn = turns.get(0);
+        assertThat(firstTurn.getModifiedSearchGrid()).containsExactly(
+          'O','O','O','O','O','O','G',
+          'O','G','L','P','P','A','R',
+          'E','O','O','O','G','O','A',
+          'A','O','O','M','O','O','P',
+          'T','O','I','O','O','O','E',
+          'E','L','O','O','O','O','O',
+          'O','O','O','O','O','O','O'
+        ); 
         Map<Integer, Set<Match>> firstTurnMap = firstTurn.getMap();
         Set<Integer> firstTurnKeySet = firstTurnMap.keySet();
         assertThat(firstTurnKeySet).containsExactly(2);
@@ -58,6 +67,15 @@ public class WordSearchTest {
           .containsExactly(tuple(2, 0, mockDown));
         
         WordSearch.Turn secondTurn = turns.get(1);
+        assertThat(secondTurn.getModifiedSearchGrid()).containsExactly(
+          'O','O','O','O','O','O','E',
+          'O','E','L','P','P','A','R',
+          'E','O','O','O','E','O','A',
+          'A','O','O','M','O','O','P',
+          'T','O','I','O','O','O','E',
+          'E','L','O','O','O','O','O',
+          'O','O','O','O','O','O','O'
+        ); 
         Map<Integer, Set<Match>> secondTurnMap = secondTurn.getMap();
         Set<Integer> secondTurnKeySet = secondTurnMap.keySet();
         assertThat(secondTurnKeySet).containsExactly(3);
@@ -66,6 +84,7 @@ public class WordSearchTest {
           .containsExactly(tuple(0, 6, mockDown));
         
         WordSearch.Turn lastTurn = turns.get(2);
+        assertThat(lastTurn.getModifiedSearchGrid()).isNull();
         Map<Integer, Set<Match>> lastTurnMap = lastTurn.getMap();
         Set<Integer> lastTurnKeySet = lastTurnMap.keySet();
         assertThat(lastTurnKeySet).containsExactly(0, 4);
