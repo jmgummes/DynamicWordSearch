@@ -69,7 +69,7 @@ public class Generator {
   }
   
   private boolean checkWordSearch(WordSearch wordSearch, SolutionWords solutionWords) {
-    WordSearch.Solution solution = wordSearch.solve();
+    WordSearch.Solution solution = wordSearch.solve(new WordDirectionMapper());
     
     int expectedTurnsCount = solutionWords.size() - extraMatchesCount;
     if(missingInSolutionCount > 0 && extraMatchesCount == 0)
@@ -358,7 +358,7 @@ public class Generator {
     
     private String[] generateWordBank() {
       List<String> uniqueWords = getUniqueWords();
-      String[] wordBank = new String[uniqueWords.size()];
+      String[] wordBank = new String[uniqueWords.size() + missingInSolutionCount];
       for(int i = 0; i < uniqueWords.size(); i++)
         wordBank[missingInSolutionCount + i] = uniqueWords.get(i);
       setMissingWords(wordBank);
@@ -366,9 +366,20 @@ public class Generator {
       return wordBank;
     }
     
+    private List<String> getUnusedSourceWords() {
+      Set<String> usedWords = new HashSet<>();
+      for(String word : words)
+        usedWords.add(word);
+      List<String> unusedSourceWords = new LinkedList<String>();
+      for(String word : sourceWords)
+        if(!usedWords.contains(word))
+          unusedSourceWords.add(word);
+      return unusedSourceWords;
+    }
+    
     private void setMissingWords(String[] wordBank) {
       List<String> words = new LinkedList<String>();
-      for(String word : sourceWords)
+      for(String word : getUnusedSourceWords())
         words.add(word);
       for(int i = 0; i < missingInSolutionCount; i++) {
         int j = (int) (Math.random() * words.size());
