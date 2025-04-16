@@ -1,12 +1,11 @@
 import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
 import static org.mockito.Mockito.*;
+import static org.assertj.core.api.Assertions.*;
 
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-
-import static org.assertj.core.api.Assertions.*;
 
 public class WordSearchTest {
 
@@ -49,6 +48,7 @@ public class WordSearchTest {
         List<WordSearch.Turn> turns = solution.getTurns();
         assertThat(turns).hasSize(3);
         
+        // First turn
         WordSearch.Turn firstTurn = turns.get(0);
         assertThat(firstTurn.getModifiedSearchGrid()).containsExactly(
           'O','O','O','O','O','O','G',
@@ -66,6 +66,7 @@ public class WordSearchTest {
         assertThat(firstTurnMatches).extracting("searchGridRow", "searchGridCol", "direction")
           .containsExactly(tuple(2, 0, mockDown));
         
+        // Second turn
         WordSearch.Turn secondTurn = turns.get(1);
         assertThat(secondTurn.getModifiedSearchGrid()).containsExactly(
           'O','O','O','O','O','O','E',
@@ -83,6 +84,7 @@ public class WordSearchTest {
         assertThat(secondTurnMatches).extracting("searchGridRow", "searchGridCol", "direction")
           .containsExactly(tuple(0, 6, mockDown));
         
+        // Third and last turn
         WordSearch.Turn lastTurn = turns.get(2);
         assertThat(lastTurn.getModifiedSearchGrid()).isNull();
         Map<Integer, Set<Match>> lastTurnMap = lastTurn.getMap();
